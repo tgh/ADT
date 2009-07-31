@@ -192,7 +192,8 @@ void run_Adt(LADSPA_Handle instance, unsigned long total_samples)
 	/*
 	 * NOTE: these special cases should never happen, but you never know--like
 	 * if someone is developing a host program and it has some bugs in it, it
-	 * might pass some bad data.
+	 * might pass some bad data.  If that's the case these printf's will help
+	 * the developer anyway!
 	 */
 	if (total_samples <= 1)
 	{
@@ -213,16 +214,54 @@ void run_Adt(LADSPA_Handle instance, unsigned long total_samples)
 	{
 		printf("\nPlugin received a sample rate below 100 samples per second.");
 		printf("\nPlugin not executed.\n");
+		return;
 	}
 	
+	// get the offset in samples
+	const int SAMPLE_OFFSET = GetOffsetInSamples(adt->sample_rate);
+	
 	// buffer pointers
-	LADSPA_Data * input;
-	LADSPA_Data * output;
+	LADSPA_Data * input = NULL;
+	LADSPA_Data * output = NULL;
+	LADSPA_Data * run_off = adt->block_run_off;
 	
 	// buffer indexes
 	unsigned long in_index = 0;
 	unsigned long out_index = 0;
-
+	int run_off_index = 0;
+	
+	// copy all left channel input buffer into left channel output buffer
+	input = adt->Input_Left;
+	output = adt->Output_Left;
+	for (in_index = 0; in_index < total_samples; ++in_index)
+	{
+		output[out_index] = input[in_index];
+		++out_index;
+	}
+	// copy all samples from the run off buffer into the right channel output buffer
+	output = adt->Output_Right;
+	out_index = 0;
+	for (run_off_index = 0; run_off_index < SAMPLE_OFFSET; ++run_off_index)
+	{
+		output[out_index] = run_off[run_off_index];
+		++out_index;
+	}
+	// copy right channel input buffer into the rest of right channel output buffer
+	input = adt->Input_Right;
+	in_index = 0;
+	for (out_index; out_index < total_samples; ++out_index)
+	{
+		output[out_index] = input[in_index];
+		++in_index;
+	}
+	// copy the left over samples from the right channel input buffer into the
+	// run off buffer
+	run_off_index = 0;
+	for (in_index; in_index < total_samples; ++in_index)
+	{
+		run_off[run_off_index] = input[in_index];
+		++run_off_index;
+	}
 }
 
 //-----------------------------------------------------------------------------

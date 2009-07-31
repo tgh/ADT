@@ -1,11 +1,21 @@
 early return error handling (samples, sample rate, instance is NULL)
 
-(FOR STEREO)
-setup constant sample offset = sample rate * (milliseconds / 1000)
-	( const int SAMPLE_OFFSET = adt->sample_rate * (((LADSPA_Data) adt->milliseconds) / 1000.0f); )
+(FOR STEREO ONLY)
+setup constant sample offset = GetOffseInSamples(sample rate)
 setup input buffer pointer = NULL
 setup ouput buffer pointer = NULL
 setup input index = 0
 setup output index = 0
+setup offset index = 0
+setup block run off buffer pointer = adt->block_run_off
 
+set input buffer pointer to left input buffer
+set output buffer pointer to left output buffer
 
+copy all samples from the left input buffer to the left output buffer
+
+copy all samples from the block run off buffer to the right output buffer
+
+copy the right input buffer to the right output buffer up to the end of the right output buffer
+
+copy the rest of the right input buffer into the block run off buffer
