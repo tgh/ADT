@@ -206,6 +206,11 @@ void run_Adt(LADSPA_Handle instance, unsigned long total_samples)
 		printf("\nPlugin not executed.\n");
 		return;
 	}
+	if (adt->sample_rate < 100.0f)
+	{
+		printf("\nPlugin received a sample rate below 100 samples per second.");
+		printf("\nPlugin not executed.\n");
+	}
 	
 	// buffer pointers
 	LADSPA_Data * input;
@@ -215,9 +220,6 @@ void run_Adt(LADSPA_Handle instance, unsigned long total_samples)
 	unsigned long in_index = 0;
 	unsigned long out_index = 0;
 
-	input = adt->block_run_off;
-	printf("\nLeft: %f", input[0]);
-	adt->block_run_off[0] = 1.0f;
 }
 
 //-----------------------------------------------------------------------------
