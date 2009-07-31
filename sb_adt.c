@@ -5,7 +5,20 @@
  * Please see the file COPYING in the source
  * distribution of this software for license terms.
  *
- * XXX
+ * This is a LADSPA audio plugin that tries to emulate the ADT (Artifical
+ * Double Tracking) technique invented by Ken Townsend, a studio technician
+ * from Abbey Road Studios, for The Beatles.
+ *
+ * This plugin is ONLY FOR STEREO sound files.  Not only that, but it is
+ * intended to be used with stereo files that have just been converted
+ * from mono.  A mono sound in stereo is still a mono sound.  But using ADT
+ * shifts the right channel of the mono sound just slightly (as in milliseconds).
+ * This does two things at once:  creates a panned stereo sound, and virtually
+ * double-tracks the sound.  For example, you lay down a vocal track.  Then
+ * apply ADT to it, and you automatically have two vocal tracks (sung literally
+ * exactly the same), and panned into full stereo.  I say it's 'virtually' double-
+ * tracked, because, of course, it is still only one sound file, and thus, can
+ * only be one track.
  *
  * Thanks to:
  * - Bart Massey of Portland State University (http://web.cecs.pdx.edu/~bart/)
@@ -181,7 +194,10 @@ void connect_port_to_Adt(LADSPA_Handle instance, unsigned long Port, LADSPA_Data
 /*
  * Here is where the rubber hits the road.  The actual sound manipulation
  * is done in run().
- * XXX
+ * All it does is shift the right channel to the right the specified number
+ * of samples (the offset).  It is intended to be used with mono audio files
+ * after they have been converted to stereo to essentially "double-track" a
+ * previously mono sound and those virtual tracks--if that makes sense...
  */
 void run_Adt(LADSPA_Handle instance, unsigned long total_samples)
 {
@@ -234,7 +250,7 @@ void run_Adt(LADSPA_Handle instance, unsigned long total_samples)
 	input = adt->Input_Left;
 	output = adt->Output_Left;
 	for (in_index = 0; in_index < total_samples; ++in_index)
-	{
+	{'out
 		output[out_index] = input[in_index];
 		++out_index;
 	}
@@ -249,7 +265,12 @@ void run_Adt(LADSPA_Handle instance, unsigned long total_samples)
 	// copy right channel input buffer into the rest of right channel output buffer
 	input = adt->Input_Right;
 	in_index = 0;
-	for (out_index; out_index < total_samples; ++out_index)
+	/*
+	 * NOTE: the 'out_index = out_index' statement is to keep the compiler from giving
+	 * a warning when using just 'out_index', because you don't want to set out_index
+	 * to anything but what it already is at this point.
+	 */
+	for (out_index = out_index; out_index < total_samples; ++out_index)
 	{
 		output[out_index] = input[in_index];
 		++in_index;
@@ -257,7 +278,12 @@ void run_Adt(LADSPA_Handle instance, unsigned long total_samples)
 	// copy the left over samples from the right channel input buffer into the
 	// run off buffer
 	run_off_index = 0;
-	for (in_index; in_index < total_samples; ++in_index)
+	/*
+	 * NOTE: the 'in_index = in_index' statement is to keep the compiler from giving
+	 * a warning when using just 'in_index', because you don't want to set in_index
+	 * to anything but what it already is at this point.
+	 */
+	for (in_index = in_index; in_index < total_samples; ++in_index)
 	{
 		run_off[run_off_index] = input[in_index];
 		++run_off_index;
