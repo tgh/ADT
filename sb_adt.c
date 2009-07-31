@@ -44,15 +44,16 @@
 #define UNIQUE_ID 4305
 // number of ports involved
 #define PORT_COUNT 4
-// the milliseconds offset represented as seconds
-#define OFFSET_IN_SECONDS 0.005
+// the number of milliseconds for the offset
+#define OFFSET_IN_MILLISECONDS 5
 
 
 //-------------------------
 //-- FUNCTION PROTOTYPES --
 //-------------------------
 
-// none
+// gets the offset value in samples
+int GetOffsetInSamples(LADSPA_Data sample_rate);
 
 
 //--------------------------------
@@ -64,6 +65,9 @@ typedef struct {
 	// a buffer to hold the samples at the end of the right channel input
 	// buffer that will be left out due to the offset of the output buffer
 	LADSPA_Data * block_run_off;
+	
+	// the sample rate of the audio
+	LADSPA_Data sample_rate;
 	
 	// data locations for the input & output audio ports
 	LADSPA_Data * Input_Left;
@@ -94,7 +98,7 @@ LADSPA_Handle instantiate_Adt(const LADSPA_Descriptor * Descriptor,
 	if (adt)
 	{
 		// get the offest in samples
-		int sample_offset = (int)(sample_rate * (LADSPA_Data)OFFSET_IN_SECONDS);
+		int sample_offset = GetOffsetInSamples((LADSPA_Data)sample_rate);
 		// allocate space for the samples from the input buffer that will be left out
 		adt->block_run_off = malloc(sizeof(LADSPA_Data) * sample_offset);
 		// return NULL if malloc failed
@@ -103,15 +107,39 @@ LADSPA_Handle instantiate_Adt(const LADSPA_Descriptor * Descriptor,
 			free(adt);
 			return NULL;
 		}
-		
-//--------------
-		unsigned long index = 0;
-		for (index = 0; index < sample_offset; ++index)
-			adt->block_run_off[index] = 0.0f;
-//--------------
+		// set the sample rate
+		adt->sample_rate = (LADSPA_Data)sample_rate;
 	}
 	// send the LADSPA_Handle to the host.  If malloc failed, NULL is returned.
 	return adt;
+}
+
+//-----------------------------------------------------------------------------
+
+/*
+ * This procedure just zero's out the block run off buffer inside the Adt
+ * struct that's allocated in instantiate_Adt.  The other pointers inside
+ * Adt are set to memory allocated by the host, which is why there are not
+ * regarded here--only the ones allocated in instantiate_Adt, which is
+ * block_run_off.
+ */
+void activate_Adt(LADSPA_Handle instance)
+{
+	printf("\nIn activate_Adt");
+	
+	Adt * adt = (Adt *) instance;
+	// get the offset in samples in order to send the size of the buffer to memset
+	int sample_offset = GetOffsetInSamples(adt->sample_rate);
+	/*
+	 * Richard Furse did this in his simple delay line plugin (part of the
+	 * ladspa SDK).  Here is his comment: "Need to reset the delay history
+	 * in this function rather than instantiate() in case deactivate()
+	 * followed by activate() have been called to reinitialise a delay line."
+	 * Of course, this isn't delay, but the idea is the same.  However, I
+	 * really don't understand it, seeing as neither that plugin nor this one
+	 * have a deactivate() function...
+	 */
+	memset(adt->block_run_off, 0, sizeof(LADSPA_Data) * sample_offset);
 }
 
 //-----------------------------------------------------------------------------
@@ -222,7 +250,7 @@ LADSPA_Descriptor * Adt_descriptor = NULL;
 
 
 /*
- * The _init() function is called whenever this plugin is first loaded
+ * The _init() procedure is called whenever this plugin is first loaded
  * by the host using it (when the host program is first opened).
  */
 void _init()
@@ -363,7 +391,7 @@ void _init()
 		// set the instance's function pointers to appropriate functions
 		Adt_descriptor->instantiate = instantiate_Adt;
 		Adt_descriptor->connect_port = connect_port_to_Adt;
-		Adt_descriptor->activate = NULL;
+		Adt_descriptor->activate = activate_Adt;
 		Adt_descriptor->run = run_Adt;
 		Adt_descriptor->run_adding = NULL;
 		Adt_descriptor->set_run_adding_gain = NULL;
@@ -422,6 +450,21 @@ void _fini()
 		
 		free(Adt_descriptor);
 	}
+}
+
+//-----------------------------------------------------------------------------
+
+/*
+ * This function just converts the #defined offset from milliseconds to samples.
+ */
+int GetOffsetInSamples(LADSPA_Data sample_rate)
+{
+	// convert the offset in milliseconds to seconds
+	LADSPA_Data offset_seconds = (LADSPA_Data)OFFSET_IN_MILLISECONDS / 1000.0f;
+	// convert the seconds to samples
+	int offset_samples = (int) (sample_rate * offset_seconds);
+	
+	return offset_samples;
 }
 
 // ------------------------------- EOF ----------------------------------------
