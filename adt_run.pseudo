@@ -1,0 +1,11 @@
+early return error handling (samples, sample rate, instance is NULL)
+
+(FOR STEREO)
+setup constant sample offset = sample rate * (milliseconds / 1000)
+	( const int SAMPLE_OFFSET = adt->sample_rate * (((LADSPA_Data) adt->milliseconds) / 1000.0f); )
+setup input buffer pointer = NULL
+setup ouput buffer pointer = NULL
+setup input index = 0
+setup output index = 0
+
+
