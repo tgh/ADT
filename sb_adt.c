@@ -206,7 +206,10 @@ void run_Adt(LADSPA_Handle instance, unsigned long total_samples)
 		printf("\nPlugin not executed.\n");
 		return;
 	}
-	if (adt->sample_rate < 100.0f)
+	// for a one millisecond offest, a sample rate of 1000 is as low as you would
+	// want to go.  Anything below that would risk having an offset of 0 samples,
+	// which is pointless.
+	if (adt->sample_rate < 1000.0f)
 	{
 		printf("\nPlugin received a sample rate below 100 samples per second.");
 		printf("\nPlugin not executed.\n");
