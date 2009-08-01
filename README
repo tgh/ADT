@@ -3,7 +3,8 @@ ADT (part of the StudioBlood LADSPA plugin package, hence the sb_ prefix)
 July 31, 2009. Tyler Hayes. Portland, OR.
 
 ADT is an audio effect plugin using LADPSA (Linux Audio Developers Simple
-Plugin API). 
+Plugin API).  It tries to emulate the ADT (Artifical Double Tracking) technique
+invented by Ken Townsend, a studio technician from Abbey Road Studios, for The Beatles.
 
 -------
 NOTICE:
