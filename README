@@ -3,7 +3,27 @@ ADT (part of the StudioBlood LADSPA plugin package, hence the sb_ prefix)
 July 31, 2009. Tyler Hayes. Portland, OR.
 
 ADT is an audio effect plugin using LADPSA (Linux Audio Developers Simple
-Plugin API). XXX
+Plugin API). 
+
+-------
+NOTICE:
+-------
+At this point this plugin is ONLY FOR STEREO sound files.  Not only that, but it
+is intended to be used with stereo files that have just been converted from mono
+(although it can be used with any stereo sound). A mono sound in stereo is still a
+mono sound.  But using ADT shifts the right channel of the mono sound just slightly
+(as in milliseconds). This does two things at once:  creates a panned stereo sound,
+and virtually double-tracks the sound.
+For example, you lay down a vocal track.  Then apply ADT to it, and you
+automatically have two vocal tracks (sung literally exactly the same), and panned
+into full stereo.  I say it's 'virtually' double-tracked, because, of course, it
+is still only one sound file, and thus, can only be one track.
+
+Mono capabilities is planned, where the second sound that is shifted to create the
+virtual second track is placed on top of the existing sound--the same way delay and
+such is done.  I haven't learned yet how to do this, but will soon...
+
+-------
 
 It is written in C because the API is in C, and licensed under the GPL v3,
 because it's an easy choice when one doesn't want to take the time to
