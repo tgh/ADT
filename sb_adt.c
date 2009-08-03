@@ -102,8 +102,6 @@ typedef struct {
 LADSPA_Handle instantiate_Adt(const LADSPA_Descriptor * Descriptor,
 										unsigned long sample_rate)
 {
-	printf("\nIn instantiate_Adt");
-	
 	Adt * adt;
 	// allocate space for a Adt struct instance
 	adt = (Adt *) malloc(sizeof(Adt));
@@ -138,8 +136,6 @@ LADSPA_Handle instantiate_Adt(const LADSPA_Descriptor * Descriptor,
  */
 void activate_Adt(LADSPA_Handle instance)
 {
-	printf("\nIn activate_Adt");
-	
 	Adt * adt = (Adt *) instance;
 	// get the offset in samples in order to send the size of the buffer to memset
 	int sample_offset = GetOffsetInSamples(adt->sample_rate);
@@ -164,8 +160,6 @@ void activate_Adt(LADSPA_Handle instance)
  */
 void connect_port_to_Adt(LADSPA_Handle instance, unsigned long Port, LADSPA_Data * data_location)
 {
-	printf("\nIn connect_port_to_Adt");
-	
 	Adt * adt;
 	
 	// cast the (void *) instance to (Adt *) and set it to local pointer
@@ -201,8 +195,6 @@ void connect_port_to_Adt(LADSPA_Handle instance, unsigned long Port, LADSPA_Data
  */
 void run_Adt(LADSPA_Handle instance, unsigned long total_samples)
 {
-	printf("\nIn run_Adt");
-
 	Adt * adt = (Adt *) instance;
 
 	/*
@@ -298,8 +290,6 @@ void run_Adt(LADSPA_Handle instance, unsigned long total_samples)
  */
 void cleanup_Adt(LADSPA_Handle instance)
 {
-	printf("\nIn cleanup_Adt");
-
 	Adt * adt = (Adt *) instance;
 	
 	if (!adt)
@@ -325,8 +315,6 @@ LADSPA_Descriptor * Adt_descriptor = NULL;
  */
 void _init()
 {
-	printf("\nIn _init");
-
 	/*
 	 * allocate memory for Adt_descriptor (it's just a pointer at this point).
 	 * in other words create an actual LADSPA_Descriptor struct instance that
@@ -480,8 +468,6 @@ void _init()
  */
 const LADSPA_Descriptor * ladspa_descriptor(unsigned long index)
 {
-	printf("\nIn ladspa_descriptor");
-
 	if (index == 0)
 		return Adt_descriptor;
 	else
@@ -497,8 +483,6 @@ const LADSPA_Descriptor * ladspa_descriptor(unsigned long index)
  */
 void _fini()
 {
-	printf("\nIn _fini\n");
-
 	if (Adt_descriptor)
 	{
 		free((char *) Adt_descriptor->Label);
