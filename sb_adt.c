@@ -242,7 +242,7 @@ void run_Adt(LADSPA_Handle instance, unsigned long total_samples)
 	input = adt->Input_Left;
 	output = adt->Output_Left;
 	for (in_index = 0; in_index < total_samples; ++in_index)
-	{'out
+	{
 		output[out_index] = input[in_index];
 		++out_index;
 	}
