@@ -350,7 +350,7 @@ void _init() {
         Adt_descriptor->PortCount = PORT_COUNT;
 
         /*
-         * used for allocatingand initailizing a LADSPA_PortDescriptor array
+         * used for allocating and initailizing a LADSPA_PortDescriptor array
          * (which is an array of ints) since Adt_descriptor-> PortDescriptors
          * is a const *.
          */
