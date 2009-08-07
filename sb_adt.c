@@ -59,7 +59,7 @@
 // number of ports involved
 #define PORT_COUNT 4
 // the number of milliseconds for the offset
-#define OFFSET_IN_MILLISECONDS 5
+#define OFFSET_IN_MILLISECONDS 75
 
 
 //-------------------------
