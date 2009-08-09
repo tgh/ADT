@@ -7,7 +7,9 @@ ALL RIGHTS RESERVED.
 ADT is an audio effect plugin using LADPSA (Linux Audio Developers Simple
 Plugin API).  It tries to emulate the ADT (Artifical Double Tracking) technique
 invented by Ken Townsend, a studio technician from Abbey Road Studios, for The
-Beatles.
+Beatles.  Essentially it takes the right channel of a stereo file, and offsets
+it a number of milliseconds (specified by the user).  The bounds are 5 and 200
+milliseconds.
 
 -------
 NOTICE:

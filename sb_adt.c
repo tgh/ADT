@@ -50,6 +50,8 @@
 #define ADT_OUTPUT_LEFT 2
 // right channel output
 #define ADT_OUTPUT_RIGHT 3
+// control port for millisecond offset
+#define ADT_OFFSET 4
 
 /*
  * Other constants
@@ -57,9 +59,20 @@
 // the plugin's unique ID given by Richard Furse (ladspa@muse.demon.co.uk)
 #define UNIQUE_ID 4305
 // number of ports involved
-#define PORT_COUNT 4
-// the number of milliseconds for the offset
-#define OFFSET_IN_MILLISECONDS 75
+#define PORT_COUNT 5
+// the maximum and minimum milliseconds for the offset
+#define MAX_OFFSET 200
+#define MIN_OFFSET 5
+
+
+//------------
+//-- MACROS --
+//------------
+/*
+ * This macro ensures the value used for the millisecond offset is between 5
+ * and 200.
+ */
+#define LIMIT_BETWEEN_5_AND_200(x) (((x) < 5) ? 5 : (((x) > 200) ? 200 : (x)))
 
 
 //-------------------------
@@ -67,7 +80,7 @@
 //-------------------------
 
 // gets the offset value in samples
-int GetOffsetInSamples(LADSPA_Data sample_rate);
+int GetOffsetInSamples(LADSPA_Data sample_rate, LADSPA_Data offset);
 
 
 //--------------------------------
@@ -78,6 +91,13 @@ typedef struct {
     // a buffer to hold the samples at the end of the right channel input
     // buffer that will be left out due to the offset of the output buffer
     LADSPA_Data * block_run_off;
+
+    // the offset (in milliseconds) set by the user.
+    // NOTE: the number has to be an integer between 5 and 200, but this
+    // variable is a pointer to a LADSPA_Data (a float), because the connection
+    // to data_location in the connect_port() function cannot be made unless
+    // they are of the same type.
+    LADSPA_Data * offset;
 
     // the sample rate of the audio
     LADSPA_Data sample_rate;
@@ -106,10 +126,11 @@ LADSPA_Handle instantiate_Adt(const LADSPA_Descriptor * Descriptor,
     adt = (Adt *) malloc(sizeof (Adt));
     // make sure malloc was a success
     if (adt) {
-        // get the offest in samples
-        int sample_offset = GetOffsetInSamples((LADSPA_Data) sample_rate);
+        // get the maximum offset in samples
+        int sample_offset = GetOffsetInSamples((LADSPA_Data) sample_rate,
+                                               (LADSPA_Data) MAX_OFFSET);
         // allocate space for the samples from the input buffer that will be
-        // left out
+        // left out to the maximum amount of sample offset
         adt->block_run_off = malloc(sizeof (LADSPA_Data) * sample_offset);
         // return NULL if malloc failed
         if (!adt->block_run_off) {
@@ -136,7 +157,8 @@ void activate_Adt(LADSPA_Handle instance) {
     Adt * adt = (Adt *) instance;
     // get the offset in samples in order to send the size of the buffer to
     // memset
-    int sample_offset = GetOffsetInSamples(adt->sample_rate);
+    int sample_offset = GetOffsetInSamples(adt->sample_rate,
+                                           (LADSPA_Data) MAX_OFFSET);
     /*
      * Richard Furse did this in his simple delay line plugin (part of the
      * ladspa SDK).  Here is his comment: "Need to reset the delay history
@@ -176,6 +198,9 @@ void connect_port_to_Adt(LADSPA_Handle instance, unsigned long Port,
             break;
         case ADT_OUTPUT_RIGHT:
             adt->Output_Right = data_location;
+            break;
+        case ADT_OFFSET:
+            adt->offset = data_location;
             break;
     }
 }
@@ -219,7 +244,8 @@ void run_Adt(LADSPA_Handle instance, unsigned long total_samples) {
     }
 
     // get the offset in samples
-    const int SAMPLE_OFFSET = GetOffsetInSamples(adt->sample_rate);
+    const int SAMPLE_OFFSET = GetOffsetInSamples(adt->sample_rate,
+                                                 *(adt->offset));
 
     // buffer pointers
     LADSPA_Data * input = NULL;
@@ -393,6 +419,15 @@ void _init() {
                                                   LADSPA_PORT_AUDIO;
 
         /*
+         * this one gives the control port that defines the offset in
+         * milliseconds the properties that tell the host that this port takes
+         * input (from the user) and is a control port (a port that is
+         * controlled by the user).
+         */
+        temp_descriptor_array[ADT_OFFSET] = LADSPA_PORT_INPUT |
+                                            LADSPA_PORT_CONTROL;
+
+        /*
          * set temp_descriptor_array to NULL for housekeeping--we don't need
          * that local variable anymore.
          */
@@ -422,6 +457,10 @@ void _init() {
         temp_port_names[ADT_OUTPUT_LEFT] = strdup("Output Left Channel");
         temp_port_names[ADT_OUTPUT_RIGHT] = strdup("Output Right Channel");
 
+        // set the name of the control port for the millisecond offset
+        temp_port_names[ADT_OFFSET] =
+                               strdup("Right channel offset (in milliseconds)");
+
         // reset temp variable to NULL for housekeeping
         temp_port_names = NULL;
 
@@ -449,6 +488,23 @@ void _init() {
         temp_hints[ADT_INPUT_RIGHT].HintDescriptor = 0;
         temp_hints[ADT_OUTPUT_LEFT].HintDescriptor = 0;
         temp_hints[ADT_OUTPUT_RIGHT].HintDescriptor = 0;
+        /*
+         * For the control port, the BOUNDED masks from ladspa.h tell the host
+         * that this control has limits (this one is 5 and 200 as defined in
+         * the Macro at the top). The DEFAULT_LOW mask tells the host to set
+         * the control value upon start (like for a gui) to a low value between
+         * the bounds.
+         * The INTEGER mask tells the host that the control values should be in
+         * integers.
+         */
+        temp_hints[ADT_OFFSET].HintDescriptor = (LADSPA_HINT_BOUNDED_BELOW
+                                                 | LADSPA_HINT_BOUNDED_ABOVE
+                                                 | LADSPA_HINT_DEFAULT_LOW
+                                                 | LADSPA_HINT_INTEGER);
+        // set the lower bound of the control
+        temp_hints[ADT_OFFSET].UpperBound = (LADSPA_Data) MAX_OFFSET;
+        // set the upper bound of the control
+        temp_hints[ADT_OFFSET].LowerBound = (LADSPA_Data) MIN_OFFSET;
 
         // reset temp variable to NULL for housekeeping
         temp_hints = NULL;
@@ -515,9 +571,10 @@ void _fini() {
 /*
  * This function just converts the #defined offset from milliseconds to samples.
  */
-int GetOffsetInSamples(LADSPA_Data sample_rate) {
+int GetOffsetInSamples(LADSPA_Data sample_rate, LADSPA_Data offset) {
     // convert the offset in milliseconds to seconds
-    LADSPA_Data offset_seconds = (LADSPA_Data) OFFSET_IN_MILLISECONDS / 1000.0f;
+    LADSPA_Data offset_seconds =
+      (((LADSPA_Data) LIMIT_BETWEEN_5_AND_200((int) offset)) / 1000.0f);
     // convert the seconds to samples
     int offset_samples = (int) (sample_rate * offset_seconds);
 
