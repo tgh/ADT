@@ -1,3 +1,7 @@
+Tyler Hayes <tgh@pdx.edu>, August 2009
+Pseudo code for run_Adt() function of sb_adt.c (LADSPA plugin)
+
+
 early return error handling (samples, sample rate, instance is NULL)
 
 (FOR STEREO ONLY)
