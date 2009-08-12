@@ -24,13 +24,13 @@ LADSPA_PATH = /usr/lib/ladspa      # change these 2 variables to match
 UNINSTALL = /usr/lib/ladspa/sb_*   # your LADSPA_PATH environment
                                    # variable (type 'echo $LADSPA_PATH
                                    # at your shell prompt)
-PLUGINS	= adt.so
+PLUGINS	= sb_adt.so
 
 # ----------------------------------------------------
 
 all: $(PLUGINS)
 
-sb_adt.o: sb_adt.c ladspa.h
+sb_adt.o: sb_adt.c ../ladspa.h
 	$(CC) $(CFLAGS) -c sb_adt.c
 
 sb_adt.so: sb_adt.o

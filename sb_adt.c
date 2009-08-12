@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ladspa.h"
+#include "../ladspa.h"
 
 
 //-----------------------
