@@ -30,7 +30,7 @@ PLUGINS	= sb_adt.so
 
 all: $(PLUGINS)
 
-sb_adt.o: sb_adt.c ../ladspa.h
+sb_adt.o: sb_adt.c
 	$(CC) $(CFLAGS) -c sb_adt.c
 
 sb_adt.so: sb_adt.o
